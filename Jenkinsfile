@@ -40,7 +40,7 @@ pipeline {
             steps {
                 script {
                     docker.image('my-nodejs-app').inside {
-                        withAWS(region: 'us-east-1', credentials: 'aws-cli') {
+                        withAWS(region: 'us-east-1', credentials: 'aws-credentials-id') {
                             s3Upload(bucket: 'mynodejs-s3 ', path: 'build/*')
                         }
                     }
@@ -51,7 +51,7 @@ pipeline {
             steps {
                 script {
                     docker.image('my-nodejs-app').inside {
-                        withAWS(region: 'us-east-1', credentials: 'aws-cli') {
+                        withAWS(region: 'us-east-1', credentials: 'aws-credentials-id') {
                             sh 'eb deploy'
                         }
                     }
