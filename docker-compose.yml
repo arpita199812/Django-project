@@ -1,0 +1,10 @@
+version: '2.5'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8082:8081"
+    environment:
+      - NODE_ENV=production
+
