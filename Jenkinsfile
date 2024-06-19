@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    aws s3 cp my-node-app.zip s3://${S3_BUCKET}/fullstack-bank-Nodejs-project.zip
+                    aws s3 cp fullstack-bank-Nodejs-project.zip s3://${S3_BUCKET}/fullstack-bank-Nodejs-project.zip
                     """
                 }
             }
