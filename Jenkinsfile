@@ -38,7 +38,7 @@ pipeline {
         stage('Package Application') {
             steps {
                 script {
-                    sh 'zip -r my-node-app.zip .'
+                    sh 'zip -r fullstack-bank-Nodejs-project.zip .'
                 }
             }
         }
@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    aws s3 cp my-node-app.zip s3://${S3_BUCKET}/my-node-app.zip
+                    aws s3 cp my-node-app.zip s3://${S3_BUCKET}/fullstack-bank-Nodejs-project.zip
                     """
                 }
             }
@@ -59,7 +59,7 @@ pipeline {
                     sh """
                     eb init -p docker ${APP_NAME} --region us-east-1
                     eb use ${EB_ENV}
-                    eb deploy --source s3://${S3_BUCKET}/my-node-app.zip
+                    eb deploy --source s3://${S3_BUCKET}/fullstack-bank-Nodejs-project.zip
                     """
                 }
             }
