@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 
 # Install app dependencies
 COPY package*.json ./
+RUN npm config set timeout 600000
 RUN npm install
 
 # Bundle app source
