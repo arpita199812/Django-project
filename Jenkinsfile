@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/arpita199812/fullstack-bank--Nodejs-project.git'
+                git branch: 'main', url: 'https://github.com/arpita199812/fullstack-bank--Nodejs-project.git'
             }
         }
 
