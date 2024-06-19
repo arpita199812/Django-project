@@ -1,71 +1,74 @@
 pipeline {
     agent any
-    
-    tools{
-        jdk 'jdk17'
-        nodejs 'node16'
-        
+
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        S3_BUCKET = 'mynodejs-s3'
+        APP_NAME = 'mynodejs'
+        EB_ENV = 'Mynodejs-env'
     }
-    
-    environment{
-        SCANNER_HOME= tool 'sonar-scanner'
-    }
-    
+
     stages {
-        stage('Git Checkout') {
+        stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/jaiswaladi246/fullstack-bank.git'
+                git 'https://github.com/arpita199812/fullstack-bank--Nodejs-project.git'
             }
         }
-        
-        stage('OWASP FS SCAN') {
+
+        stage('Build Docker Image') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./app/backend --disableYarnAudit --disableNodeAudit', odcInstallation: 'DC'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
-        
-        stage('TRIVY FS SCAN') {
-            steps {
-                sh "trivy fs ."
-            }
-        }
-        
-        stage('SONARQUBE ANALYSIS') {
-            steps {
-                withSonarQubeEnv('sonar') {
-                    sh " $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Bank -Dsonar.projectKey=Bank "
+                script {
+                    docker.build("${APP_NAME}:${BUILD_ID}")
                 }
             }
         }
-        
-        
-         stage('Install Dependencies') {
+
+        stage('Run Tests') {
             steps {
-                sh "npm install"
-            }
-        }
-        
-        stage('Backend') {
-            steps {
-                dir('/root/.jenkins/workspace/Bank/app/backend') {
-                    sh "npm install"
+                script {
+                    docker.image("${APP_NAME}:${BUILD_ID}").inside {
+                        sh 'npm install'
+                        sh 'npm test'
+                    }
                 }
             }
         }
-        
-        stage('frontend') {
+
+        stage('Package Application') {
             steps {
-                dir('/root/.jenkins/workspace/Bank/app/frontend') {
-                    sh "npm install"
+                script {
+                    sh 'zip -r my-node-app.zip .'
                 }
             }
         }
-        
-        stage('Deploy to Conatiner') {
+
+        stage('Upload to S3') {
             steps {
-                sh "npm run compose:up -d"
+                script {
+                    sh """
+                    aws s3 cp my-node-app.zip s3://${S3_BUCKET}/my-node-app.zip
+                    """
+                }
             }
+        }
+
+        stage('Deploy to Elastic Beanstalk') {
+            steps {
+                script {
+                    sh """
+                    eb init -p docker ${APP_NAME} --region us-east-1
+                    eb use ${EB_ENV}
+                    eb deploy --source s3://${S3_BUCKET}/my-node-app.zip
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
         }
     }
 }
