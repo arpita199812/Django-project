@@ -5,9 +5,11 @@ WORKDIR /usr/src/app
 
 # Install app dependencies
 COPY package*.json ./
-RUN npm config set timeout 600000
-RUN npm install
-
+RUN npm config set registry https://registry.npm.taobao.org && \
+    npm config set timeout 600000 && \
+    npm config set strict-ssl false && \
+    until npm install; do echo "Retrying npm install..."; done
+    
 # Bundle app source
 COPY . .
 
