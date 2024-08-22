@@ -6,20 +6,24 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('AWS-Access-key')
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-id')
     }
+
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/arpita199812/fullstack-bank--Nodejs-project.git'
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_CREDENTIALS') {
-                    docker.build('my-nodejs-app1')
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_CREDENTIALS) {
+                        docker.build('my-nodejs-app1')
+                    }
                 }
             }
         }
+
         stage('Run Tests') {
             steps {
                 script {
@@ -29,6 +33,7 @@ pipeline {
                 }
             }
         }
+
         stage('Package Application') {
             steps {
                 script {
@@ -38,17 +43,19 @@ pipeline {
                 }
             }
         }
+
         stage('Upload to S3') {
             steps {
                 script {
                     docker.image('my-nodejs-app1').inside {
                         withAWS(region: 'us-east-1', credentials: 'AWS-Access-key') {
-                            s3Upload(bucket: 'mynodejs-s3 ', path: 'build/*')
+                            s3Upload(bucket: 'mynodejs-s3', path: 'build/*')
                         }
                     }
                 }
             }
         }
+
         stage('Deploy to Elastic Beanstalk') {
             steps {
                 script {
@@ -61,6 +68,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             cleanWs()
