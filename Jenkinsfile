@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/arpita199812/fullstack-bank--Nodejs-project.git'
+                git branch: 'Feature2', url: 'https://github.com/arpita199812/fullstack-bank--Nodejs-project.git'
             }
         }
         stage('Build Docker Image') {
