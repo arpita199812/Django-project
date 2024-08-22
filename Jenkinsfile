@@ -4,6 +4,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID = credentials('AWS-Access-key')
         AWS_SECRET_ACCESS_KEY = credentials('AWS-Access-key')
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-id')
     }
     stages {
         stage('Checkout') {
@@ -14,6 +15,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_CREDENTIALS') {
                     docker.build('my-nodejs-app1')
                 }
             }
