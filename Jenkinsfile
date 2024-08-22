@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCESS_KEY_ID = credentials('aws-credentials-id')
-        AWS_SECRET_ACCESS_KEY = credentials('aws-credentials-id')
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
     }
     stages {
         stage('Checkout') {
@@ -14,15 +14,15 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build('my-nodejs-app')
+                    docker.build('my-nodejs-app1')
                 }
             }
         }
         stage('Run Tests') {
             steps {
                 script {
-                    docker.image('my-nodejs-app').inside {
-                        sh 'npm test'
+                    docker.image('my-nodejs-app1').inside {
+                        bat 'npm test'
                     }
                 }
             }
@@ -30,8 +30,8 @@ pipeline {
         stage('Package Application') {
             steps {
                 script {
-                    docker.image('my-nodejs-app').inside {
-                        sh 'npm run build'
+                    docker.image('my-nodejs-app1').inside {
+                        bat 'npm run build'
                     }
                 }
             }
@@ -39,8 +39,8 @@ pipeline {
         stage('Upload to S3') {
             steps {
                 script {
-                    docker.image('my-nodejs-app').inside {
-                        withAWS(region: 'us-east-1', credentials: 'aws-credentials-id') {
+                    docker.image('my-nodejs-app1').inside {
+                        withAWS(region: 'us-east-1', credentials: 'AWS-Access-key') {
                             s3Upload(bucket: 'mynodejs-s3 ', path: 'build/*')
                         }
                     }
@@ -50,9 +50,9 @@ pipeline {
         stage('Deploy to Elastic Beanstalk') {
             steps {
                 script {
-                    docker.image('my-nodejs-app').inside {
-                        withAWS(region: 'us-east-1', credentials: 'aws-credentials-id') {
-                            sh 'eb deploy'
+                    docker.image('my-nodejs-app1').inside {
+                        withAWS(region: 'us-east-1', credentials: 'AWS-Access-key') {
+                            bat 'eb deploy'
                         }
                     }
                 }
