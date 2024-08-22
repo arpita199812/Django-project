@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCESS_KEY_ID = credentials('AWS-Access-key')
-        AWS_SECRET_ACCESS_KEY = credentials('AWS-Access-key')
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-id')
+        AWS_ACCESS_KEY_ID = credentialsId('AWS-Access-key')
+        AWS_SECRET_ACCESS_KEY = credentialsId('AWS-Access-key')
+        DOCKER_HUB_CREDENTIALS = credentialsId('docker-hub-id')
     }
 
     stages {
