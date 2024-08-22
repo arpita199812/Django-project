@@ -2,9 +2,11 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCESS_KEY_ID = credentialsId('AWS-Access-key')
-        AWS_SECRET_ACCESS_KEY = credentialsId('AWS-Access-key')
-        DOCKER_HUB_CREDENTIALS = credentialsId('docker-hub-id')
+        withCredentials([
+            string(credentialsId: 'AWS-Access-key', variable: 'AWS_ACCESS_KEY'),
+            string(credentialsId: 'AWS-Access-key', variable: 'AWS_SECRET_ACCESS_KEY'),
+            string(credentialsId: 'docker-hub-id', variable: 'DOCKER_HUB_TOKEN')
+        ])
     }
 
     stages {
@@ -17,7 +19,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_CREDENTIALS) {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_TOKEN) {
                         docker.build('my-nodejs-app1')
                     }
                 }
@@ -48,7 +50,7 @@ pipeline {
             steps {
                 script {
                     docker.image('my-nodejs-app1').inside {
-                        withAWS(region: 'us-east-1', credentials: 'AWS-Access-key') {
+                        withAWS(region: 'us-east-1', credentials: 'AWS-ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY) {
                             s3Upload(bucket: 'mynodejs-s3', path: 'build/*')
                         }
                     }
@@ -60,7 +62,7 @@ pipeline {
             steps {
                 script {
                     docker.image('my-nodejs-app1').inside {
-                        withAWS(region: 'us-east-1', credentials: 'AWS-Access-key') {
+                        withAWS(region: 'us-east-1', credentials: 'AWS-ACCESS_KEY', 'AWS_SECRET_ACCESS_KEY) ) {
                             bat 'eb deploy'
                         }
                     }
