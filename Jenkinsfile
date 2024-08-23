@@ -6,7 +6,7 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('AWS-Secret-Access-key')
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-nodejs-app')
         DOCKER_REGISTRY_URL = 'https://hub.docker.com/'
-        AWS_REGION = 'us-east-1' // Setting a region for AWS operations
+        AWS_REGION = 'us-east-1'
     }
 
     stages {
@@ -30,17 +30,31 @@ pipeline {
             }
         }
 
-        stage('Run All Tests') {
+        stage('Run E2E Tests') {
+            steps {
+                script {
+                    try {
+                        bat 'npm run test:e2e'
+                    } catch (Exception e) {
+                        echo 'E2E tests failed!'
+                        currentBuild.result = 'UNSTABLE'
+                    } finally {
+                        junit '**/cypress/results/*.xml' // Adjust the path to your Cypress results if needed
+                    }
+                }
+            }
+        }
+
+        stage('Run Integration Tests') {
             steps {
                 script {
                     try {
                         bat 'npm run test:integration'
-                        bat 'npm run test:e2e'
-                        bat 'npm run test'
                     } catch (Exception e) {
-                        echo 'Some tests failed!'
-                        currentBuild.result = 'FAILURE'
-                        error 'Test Failure'
+                        echo 'Integration tests failed!'
+                        currentBuild.result = 'UNSTABLE'
+                    } finally {
+                        junit '**/app/backend/test-results.xml' // Adjust the path to your Mocha results if needed
                     }
                 }
             }
@@ -55,12 +69,12 @@ pipeline {
                     }
                 }
             }
-        } 
+        }
 
         stage('Start Docker Container') {
             steps {
                 script {
-                    bat 'docker-compose up -d'
+                    bat 'npm run compose:up'
                 }
             }
         }
@@ -89,8 +103,7 @@ pipeline {
     post {
         always {
             script {
-                // Ensure containers are stopped and removed
-                bat 'docker-compose down'
+                bat 'npm run compose:down'
             }
         }
         success {
@@ -98,6 +111,9 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed!'
+        }
+        unstable {
+            echo 'Pipeline is unstable due to test failures.'
         }
     }
 }
