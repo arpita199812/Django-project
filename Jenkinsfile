@@ -23,16 +23,6 @@ pipeline {
             }
         }
 
-        stage('Start the Container') {
-            steps {
-                script {
-                    bat 'npm run compose:up'
-                    // It might be better to separate 'compose:down' into a different step if it is meant to stop after some operations
-                    // bat 'npm run compose:down'
-                }
-            }
-        }
-
         stage('Run Test') {
             steps {
                 script {
@@ -58,7 +48,16 @@ pipeline {
                     }
                 }
             }
-        }  
+        } 
+        stage('Start the Container') {
+            steps {
+                script {
+                    bat 'npm run compose:up'
+                    // It might be better to separate 'compose:down' into a different step if it is meant to stop after some operations
+                    // bat 'npm run compose:down'
+                }
+            }
+        }
 
         stage('Upload to S3') {
             steps {
