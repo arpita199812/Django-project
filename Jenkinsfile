@@ -15,37 +15,50 @@ pipeline {
             }
         }
 
+        stage('Install') {
+            steps {
+                script {
+                        bat 'npm install'
+                    }
+                }
+            }
+        }
+
+        stage('Start the Container') {
+            steps {
+                script {
+                        bat 'npm run compose:up'
+                        bat 'npm run compose:down'
+                    }
+                }
+            }
+        }
+        stage('Run Test') {
+            steps {
+                script {
+                        bat 'npm run test: integration'
+                    }
+                }
+            }
+        }
+        stage('E2E Test') {
+            steps {
+                script {
+                        bat 'npm run test:e2e'
+                    }
+                }
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script { 
                     withDockerRegistry(credentialsId: 'docker-hub-nodejs-app', toolName: 'Docker', url: 'https://hub.docker.com/') {
-                        def image = docker.build('arpita199812/your-nodejs-app:latest', '.')
+                        def image = docker.build('arpita199812/your-nodejs-app1:latest', '.')
                         image.push()
                     }
                 }
             }
         }  
-
-        stage('Run Tests') {
-            steps {
-                script {
-                    docker.image('my-nodejs-app1:latest').inside {
-                        bat 'npm test'
-                    }
-                }
-            }
-        }
-
-        stage('Package Application') {
-            steps {
-                script {
-                    docker.image('my-nodejs-app1:latest').inside {
-                        bat 'npm run build'
-                    }
-                }
-            }
-        }
-
         stage('Upload to S3') {
             steps {
                 script {
