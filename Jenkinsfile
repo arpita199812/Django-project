@@ -19,7 +19,7 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-nodejs-app', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         bat '''
-                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
                         docker build -t arpita199812/your-nodejs-app:latest .
                         docker push arpita199812/your-nodejs-app:latest
                         '''
