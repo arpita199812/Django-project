@@ -4,7 +4,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY = credentials('AWS-Access-key')
         AWS_SECRET_ACCESS_KEY = credentials('AWS-Secret-Access-key')
-        DOCKER_HUB = credentials('docker-hub-nodejs-app')
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-nodejs-app')
         DOCKER_REGISTRY_URL = 'https://hub.docker.com/'
     }
 
@@ -18,8 +18,7 @@ pipeline {
         stage('Install') {
             steps {
                 script {
-                        bat 'npm install'
-                    }
+                    bat 'npm install'
                 }
             }
         }
@@ -27,45 +26,45 @@ pipeline {
         stage('Start the Container') {
             steps {
                 script {
-                        bat 'npm run compose:up'
-                        bat 'npm run compose:down'
-                    }
+                    bat 'npm run compose:up'
+                    // It might be better to separate 'compose:down' into a different step if it is meant to stop after some operations
+                    // bat 'npm run compose:down'
                 }
             }
         }
+
         stage('Run Test') {
             steps {
                 script {
-                        bat 'npm run test: integration'
-                    }
+                    bat 'npm run test:integration'
                 }
             }
         }
+
         stage('E2E Test') {
             steps {
                 script {
-                        bat 'npm run test:e2e'
-                    }
+                    bat 'npm run test:e2e'
                 }
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 script { 
-                    withDockerRegistry(credentialsId: 'docker-hub-nodejs-app', toolName: 'Docker', url: 'https://hub.docker.com/') {
+                    docker.withRegistry(DOCKER_REGISTRY_URL, 'docker-hub-nodejs-app') {
                         def image = docker.build('arpita199812/your-nodejs-app1:latest', '.')
                         image.push()
                     }
                 }
             }
         }  
+
         stage('Upload to S3') {
             steps {
                 script {
-                    docker.image('my-nodejs-app1:latest').inside {
-                        withAWS(region: 'us-east-1', credentials: [AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY]) {
-                            s3Upload(bucket: 'mynodejs-s3', path: 'build/*', sourceFile: 'build/*')
-                        }
+                    withAWS(region: 'us-east-1', credentials: 'AWS-Credentials-ID') {
+                        s3Upload(bucket: 'mynodejs-s3', path: 'build/*', file: 'build/*')
                     }
                 }
             }
@@ -74,13 +73,25 @@ pipeline {
         stage('Deploy to Elastic Beanstalk') {
             steps {
                 script {
-                    docker.image('my-nodejs-app1:latest').inside {
-                        withAWS(region: 'us-east-1', credentials: [AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY]) {
-                            bat 'eb deploy my-environment'
-                        }
+                    withAWS(region: 'us-east-1', credentials: 'AWS-Credentials-ID') {
+                        bat 'eb deploy my-environment'
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            script {
+                bat 'npm run compose:down'
+            }
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
