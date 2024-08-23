@@ -18,9 +18,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script { 
-                    docker.withRegistry(env.DOCKER_REGISTRY_URL, 'docker-hub-credentials-id') {
-                        def app = docker.build("your-image-name:${env.BUILD_ID}")
-                        app.push()
+                    withDockerRegistry(credentialsId: 'docker-hub-nodejs-app', toolName: 'Docker', url: 'https://index.docker.io/v1/') {
+                        def image = docker.build('arpita199812/your-nodejs-app:latest', '.')
+                        image.push()
                     }
                 }
             }
