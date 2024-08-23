@@ -5,7 +5,7 @@ pipeline {
         AWS_ACCESS_KEY = credentials('AWS-Access-key')
         AWS_SECRET_ACCESS_KEY = credentials('AWS-Secret-Access-key')
         DOCKER_HUB = credentials('docker-hub-nodejs-app')
-        DOCKER_REGISTRY_URL = 'https://index.docker.io/v1/'
+        DOCKER_REGISTRY_URL = 'https://hub.docker.com/'
     }
 
     stages {
@@ -18,7 +18,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script { 
-                    withDockerRegistry(credentialsId: 'docker-hub-nodejs-app', toolName: 'Docker', url: 'https://index.docker.io/v1/') {
+                    withDockerRegistry(credentialsId: 'docker-hub-nodejs-app', toolName: 'Docker', url: 'https://hub.docker.com/') {
                         def image = docker.build('arpita199812/your-nodejs-app:latest', '.')
                         image.push()
                     }
