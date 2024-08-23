@@ -18,11 +18,10 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-nodejs-app', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        bat '''
-                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                        docker build -t arpita199812/your-nodejs-app:latest .
-                        docker push arpita199812/your-nodejs-app:latest
-                        '''
+                        docker.withRegistry('https://index.docker.io/v1/', [username: DOCKER_USERNAME, password: DOCKER_PASSWORD]) {
+                            docker.build('arpita199812/your-nodejs-app:latest', '.')
+                            docker.push('arpita199812/your-nodejs-app:latest')
+                        }
                     }
                 }
             }
