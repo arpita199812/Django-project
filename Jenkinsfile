@@ -30,7 +30,7 @@ pipeline {
                 }
             }
         }
-        stage('Run Test') {
+        stage('Test') {
             steps {
                 script {
                     bat 'npm run test:e2e:open'
