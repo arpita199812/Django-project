@@ -30,6 +30,13 @@ pipeline {
                 }
             }
         }
+        stage('Run Test') {
+            steps {
+                script {
+                    bat 'npm run test:e2e:open'
+                }
+            }
+        }
 
         stage('E2E Test') {
             steps {
@@ -38,6 +45,14 @@ pipeline {
                 }
             }
         }
+        stage('NPM Test') {
+            steps {
+                script {
+                    bat 'npm run test'
+                }
+            }
+        }
+
 
         stage('Build Docker Image') {
             steps {
