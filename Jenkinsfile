@@ -2,20 +2,27 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCESS_KEY = credentials('AWS-Access-key')
+        AWS_ACCESS_KEY_ID = credentials('AWS-Access-key')
         AWS_SECRET_ACCESS_KEY = credentials('AWS-Secret-Access-key')
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-nodejs-app')
         DOCKER_REGISTRY_URL = 'https://hub.docker.com/'
+        AWS_REGION = 'us-east-1' // Setting a region for AWS operations
     }
 
     stages {
-        stage('Checkout') {
+        stage('Cleanup Workspace') {
+            steps {
+                deleteDir() // Clean workspace before starting
+            }
+        }
+
+        stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/arpita199812/fullstack-bank--Nodejs-project.git'
             }
         }
 
-        stage('Install') {
+        stage('Install Dependencies') {
             steps {
                 script {
                     bat 'npm install'
@@ -23,36 +30,21 @@ pipeline {
             }
         }
 
-        stage('Run Test') {
+        stage('Run All Tests') {
             steps {
                 script {
-                    bat 'npm run test:integration'
+                    try {
+                        bat 'npm run test:integration'
+                        bat 'npm run test:e2e'
+                        bat 'npm run test'
+                    } catch (Exception e) {
+                        echo 'Some tests failed!'
+                        currentBuild.result = 'FAILURE'
+                        error 'Test Failure'
+                    }
                 }
             }
         }
-        stage('Test') {
-            steps {
-                script {
-                    bat 'npm run test:e2e:open'
-                }
-            }
-        }
-
-        stage('E2E Test') {
-            steps {
-                script {
-                    bat 'npm run test:e2e'
-                }
-            }
-        }
-        stage('NPM Test') {
-            steps {
-                script {
-                    bat 'npm run test'
-                }
-            }
-        }
-
 
         stage('Build Docker Image') {
             steps {
@@ -64,13 +56,11 @@ pipeline {
                 }
             }
         } 
-        stage('Start the Container') {
+
+        stage('Start Docker Container') {
             steps {
                 script {
-                    bat 'docker-compose --version'
-                    bat 'npm run compose up -d'
-                    // It might be better to separate 'compose:down' into a different step if it is meant to stop after some operations
-                    // bat 'npm run compose:down'
+                    bat 'docker-compose up -d'
                 }
             }
         }
@@ -78,7 +68,7 @@ pipeline {
         stage('Upload to S3') {
             steps {
                 script {
-                    withAWS(region: 'us-east-1', credentials: 'AWS-Credentials-ID') {
+                    withAWS(region: AWS_REGION, credentials: 'AWS-Credentials-ID') {
                         s3Upload(bucket: 'mynodejs-s3', path: 'build/*', file: 'build/*')
                     }
                 }
@@ -88,7 +78,7 @@ pipeline {
         stage('Deploy to Elastic Beanstalk') {
             steps {
                 script {
-                    withAWS(region: 'us-east-1', credentials: 'AWS-Credentials-ID') {
+                    withAWS(region: AWS_REGION, credentials: 'AWS-Credentials-ID') {
                         bat 'eb deploy my-environment'
                     }
                 }
@@ -99,7 +89,8 @@ pipeline {
     post {
         always {
             script {
-                bat 'npm run compose:down'
+                // Ensure containers are stopped and removed
+                bat 'docker-compose down'
             }
         }
         success {
