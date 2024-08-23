@@ -30,6 +30,17 @@ pipeline {
             }
         }
 
+        stage('Start Server') {
+            steps {
+                script {
+                    // Start the server using a background process
+                    bat 'npm run compose:up'
+                    // Wait for a few seconds to ensure the server is up and running
+                    sleep(time: 10, unit: 'SECONDS')
+                }
+            }
+        }
+
         stage('Run E2E Tests') {
             steps {
                 script {
