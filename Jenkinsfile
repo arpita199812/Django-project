@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCESS_KEY = credentials('Access_Key_ID')
-        AWS_SECRET_ACCESS_KEY = credentials('Secret_Access_Key')
-        DOCKER_HUB_TOKEN = credentials('docker-hub-id')
+        AWS_ACCESS_KEY = credentials('AWS-Access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS-Secret-Access-key')
+        DOCKER_HUB = credentials('docker-hub-nodejs-app')
     }
 
     stages {
@@ -17,17 +17,21 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_TOKEN) {
-                        docker.build('my-nodejs-app1')
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-nodejs-app', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        bat '''
+                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+                        docker build -t arpita199812/your-nodejs-app:latest .
+                        docker push arpita199812/your-nodejs-app:latest
+                        '''
                     }
                 }
             }
-        }
+        }  
 
         stage('Run Tests') {
             steps {
                 script {
-                    docker.image('my-nodejs-app1').inside {
+                    docker.image('my-nodejs-app1:latest').inside {
                         bat 'npm test'
                     }
                 }
@@ -37,7 +41,7 @@ pipeline {
         stage('Package Application') {
             steps {
                 script {
-                    docker.image('my-nodejs-app1').inside {
+                    docker.image('my-nodejs-app1:latest').inside {
                         bat 'npm run build'
                     }
                 }
@@ -47,9 +51,9 @@ pipeline {
         stage('Upload to S3') {
             steps {
                 script {
-                    docker.image('my-nodejs-app1').inside {
+                    docker.image('my-nodejs-app1:latest').inside {
                         withAWS(region: 'us-east-1', credentials: [AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY]) {
-                            s3Upload(bucket: 'mynodejs-s3', path: 'build/*')
+                            s3Upload(bucket: 'mynodejs-s3', path: 'build/*', sourceFile: 'build/*')
                         }
                     }
                 }
@@ -59,9 +63,9 @@ pipeline {
         stage('Deploy to Elastic Beanstalk') {
             steps {
                 script {
-                    docker.image('my-nodejs-app1').inside {
+                    docker.image('my-nodejs-app1:latest').inside {
                         withAWS(region: 'us-east-1', credentials: [AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY]) {
-                            bat 'eb deploy'
+                            bat 'eb deploy my-environment'
                         }
                     }
                 }
